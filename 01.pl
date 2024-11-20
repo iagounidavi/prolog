@@ -9,19 +9,9 @@ sintoma(dor_de_garganta).
 sintoma(dor_muscular).
 
 % Associação de sintomas a doenças
-doenca(gripe) :-
-    sintoma(febre),
-    sintoma(tosse),
-    sintoma(cansaco).
-
-doenca(infeccao_viral) :-
-    sintoma(febre),
-    sintoma(dor_de_garganta),
-    sintoma(dor_muscular).
-
-doenca(enxaqueca) :-
-    sintoma(dor_de_cabeca),
-    sintoma(cansaco).
+doenca(gripe, [febre, tosse, cansaco]).
+doenca(infeccao_viral, [febre, dor_de_garganta, dor_muscular]).
+doenca(enxaqueca, [dor_de_cabeca, cansaco]).
 
 % Coletar sintomas
 diagnosticar :-
@@ -46,7 +36,14 @@ perguntar_sintomas([_|Resto], Sintomas) :-
 
 % Aponta a doença
 deduzir_doenca(Sintomas) :-
-    (   doenca(D), maplist(member, [febre, tosse, cansaco], Sintomas)
-    ->  format('O diagnóstico provável é: ~w', [D]), nl
+    (   doenca(Doenca, SintomasNecessarios),
+        eh_subset(SintomasNecessarios, Sintomas) % Verifica se os sintomas necessários estão presentes
+    ->  format('O diagnóstico provável é: ~w.', [Doenca]), nl
     ;   write('Não foi possível identificar a condição. Recomendamos consultar um médico.'), nl
     ).
+
+% Verifica se uma lista é subconjunto de outra
+eh_subset([], _). % Base: Lista vazia é subconjunto de qualquer lista.
+eh_subset([H|T], Lista) :-
+    member(H, Lista), % Verifica se o elemento H está presente na lista.
+    eh_subset(T, Lista). % Continua verificando os outros elementos.
