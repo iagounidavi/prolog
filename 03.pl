@@ -1,5 +1,3 @@
-% Iago Artner
-
 % Livros categorizados por gênero e tópicos
 livro('1984', ficcao, [politica], 'Um clássico distópico que explora os perigos de regimes totalitários.').
 livro('Sapiens', historia, [ciencia, humanidade], 'Uma breve história da humanidade e sua evolução.').
@@ -14,7 +12,10 @@ recomendar :-
     selecionar_generos(GenerosEscolhidos),
     write('Agora, informe seus interesses.'), nl,
     selecionar_interesses(InteressesEscolhidos),
-    sugerir_livros(GenerosEscolhidos, InteressesEscolhidos).
+    (InteressesEscolhidos = [] -> 
+        write('Você não selecionou nenhum interesse. Por favor, tente novamente!'), nl;
+        sugerir_livros(GenerosEscolhidos, InteressesEscolhidos)
+    ).
 
 % Coleta de gêneros favoritos
 selecionar_generos(Generos) :-
@@ -29,28 +30,41 @@ selecionar_interesses(Interesses) :-
     sort(InteressesUnicos, InteressesUnicosOrdenados),
     perguntar_opcoes(InteressesUnicosOrdenados, Interesses, 'interesse').
 
-% Coleta de multiplas opções (gênero ou interesse)
+% Coleta de múltiplas opções (gênero ou interesse)
 perguntar_opcoes([], [], _).
 perguntar_opcoes([O|Resto], [O|Escolhidos], Tipo) :-
     format('Você gosta de ~w (~w)? ', [O, Tipo]),
     read(Resposta),
-    Resposta == sim,
-    perguntar_opcoes(Resto, Escolhidos, Tipo).
+    (Resposta == sim -> perguntar_opcoes(Resto, Escolhidos, Tipo);
+     perguntar_opcoes(Resto, Escolhidos, Tipo)).
 perguntar_opcoes([_|Resto], Escolhidos, Tipo) :-
     perguntar_opcoes(Resto, Escolhidos, Tipo).
+
+% Implementação manual da interseção de listas
+intersection_manual([], _, []).
+intersection_manual([X|XS], Y, [X|Z]) :-
+    member(X, Y),  % Verifica se X está na lista Y
+    intersection_manual(XS, Y, Z).
+intersection_manual([_|XS], Y, Z) :-
+    intersection_manual(XS, Y, Z).
+
+% Verifica se algum interesse está presente nos tópicos do livro
+interesses_comum(Topicos, Interesses) :-
+    intersection_manual(Topicos, Interesses, Intersecao),
+    Intersecao \= [].
 
 % Sugere livros com base nas preferências do usuário
 sugerir_livros(Generos, Interesses) :-
     findall((Titulo, Sinopse),
         (   livro(Titulo, Genero, Topicos, Sinopse),
-            member(Genero, Generos),
-            intersection(Topicos, Interesses, Intersecao),
-            Intersecao \= []
+            member(Genero, Generos),              % Verifica o gênero
+            interesses_comum(Topicos, Interesses)  % Verifica os interesses
         ),
         LivrosRecomendados),
-    (   LivrosRecomendados \= []
+    sort(LivrosRecomendados, LivrosRecomendadosSemDuplicatas), % Remove duplicatas
+    (   LivrosRecomendadosSemDuplicatas \= []
     ->  write('Aqui estão os livros recomendados para você:'), nl,
-        listar_livros(LivrosRecomendados)
+        listar_livros(LivrosRecomendadosSemDuplicatas)
     ;   write('Não encontramos livros que correspondam aos seus interesses. Tente novamente!'), nl
     ).
 
