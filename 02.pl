@@ -8,20 +8,11 @@ sintoma(pedal_freio_macio).
 sintoma(vazamento_oleo).
 sintoma(superaquecimento).
 
-% Associação de sintomas ao problemas
-problema(bateria_fraca) :-
-    sintoma(motor_nao_liga),
-    sintoma(luzes_fracas).
-
-problema(freio_desgastado) :-
-    sintoma(barulho_ao_frear),
-    sintoma(pedal_freio_macio).
-
-problema(vazamento_sistema) :-
-    sintoma(vazamento_oleo).
-
-problema(superaquecimento_motor) :-
-    sintoma(superaquecimento).
+% Associação de sintomas aos problemas
+problema(bateria_fraca, [motor_nao_liga, luzes_fracas]).
+problema(freio_desgastado, [barulho_ao_frear, pedal_freio_macio]).
+problema(vazamento_sistema, [vazamento_oleo]).
+problema(superaquecimento_motor, [superaquecimento]).
 
 % Regras para os problemas identificados
 solucao(bateria_fraca, 'Verifique a bateria e o sistema de recarga. Substitua a bateria se necessário.').
@@ -55,7 +46,8 @@ perguntar_sintomas([_|Resto], Sintomas) :-
 
 % Processa e sugere solução
 deduzir_problema(Sintomas) :-
-    (   problema(P), maplist(member, Sintomas, [motor_nao_liga, luzes_fracas])
+    (   problema(P, SintomasNecessarios),
+        eh_subset(SintomasNecessarios, Sintomas) % Verifica se os sintomas necessários estão presentes
     ->  format('O problema identificado é: ~w', [P]), nl,
         solucao(P, Solucao),
         format('Solução recomendada: ~w', [Solucao]), nl
@@ -63,3 +55,9 @@ deduzir_problema(Sintomas) :-
         write('Não foi possível identificar o problema.'), nl,
         format('~w', [Seg]), nl
     ).
+
+% Verifica se uma lista é subconjunto de outra
+eh_subset([], _). % Base: Lista vazia é subconjunto de qualquer lista.
+eh_subset([H|T], Lista) :-
+    member(H, Lista), % Verifica se o elemento H está presente na lista.
+    eh_subset(T, Lista). % Continua verificando os outros elementos.
